@@ -1,9 +1,9 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
-#include <algorithm>
 #include <filesystem>
 #include <chrono>
+#include <iomanip>
 using namespace std;
 namespace fs = std::filesystem;
 
@@ -40,6 +40,17 @@ int c_max(const vector<int>& seq, const vector<vector<int>>& p) {
     return f[n][m];
 }
 
+void bubble_sort(vector<pair<int, int>>& s) {
+    int n = s.size();
+    for (int i = 0; i < n - 1; ++i) {
+        for (int j = 0; j < n - i - 1; ++j) {
+            if (s[j].first < s[j + 1].first) {
+                swap(s[j], s[j + 1]);
+            }
+        }
+    }
+}
+
 vector<int> priority_order(const vector<vector<int>>& p) {
     vector<pair<int, int>> s;
     for (int i = 0; i < (int)p.size(); i++) {
@@ -47,7 +58,7 @@ vector<int> priority_order(const vector<vector<int>>& p) {
         for (auto x : p[i]) sum_ += x;
         s.push_back({sum_, i});
     }
-    sort(s.begin(), s.end(), [](auto &a, auto &b) { return a.first > b.first; });
+    bubble_sort(s);
     vector<int> o;
     for (auto &x : s) o.push_back(x.second);
     return o;
@@ -81,34 +92,61 @@ vector<int> NEH_HEURISTIC(const vector<vector<int>>& p) {
     return seq;
 }
 
+string obtener_hora_actual() {
+    auto now = chrono::system_clock::now();
+    time_t tiempo_actual = chrono::system_clock::to_time_t(now);
+    stringstream ss;
+    ss << put_time(localtime(&tiempo_actual), "%Y-%m-%d %H:%M:%S");
+    return ss.str();
+}
+
 int main() {
     string directorio = ".";
+    vector<string> archivos;
+
     ofstream salida_csv("resultados_NEH.csv");
-    salida_csv << "Archivo,C_max,Secuencia\n";
+    salida_csv << "Archivo,Hora Inicio,Hora Fin,Duracion (s),C_max,Secuencia\n";
 
     for (const auto& entrada : fs::directory_iterator(directorio)) {
         string archivo = entrada.path().filename().string();
         if (archivo.find("ta") == 0) {
-            cout << "Procesando archivo: " << archivo << endl;
-
-            vector<vector<int>> matriz = leer_matriz(archivo);
-            vector<int> secuencia = NEH_HEURISTIC(matriz);
-            int cmax = c_max(secuencia, matriz);
-
-            salida_csv << archivo << "," << cmax << ",";
-            for (auto x : secuencia) salida_csv << x << " ";
-            salida_csv << "\n";
-
-            cout << "C_max: " << cmax << "\nSecuencia: ";
-            for (auto x : secuencia) cout << x << " ";
-            cout << "\n";
+            archivos.push_back(archivo);
         }
     }
 
-    salida_csv.close();
-    cout << "Resultados guardados en 'resultados_NEH.csv'.\n";
+    for (size_t i = 0; i < archivos.size(); ++i) {
+        for (size_t j = i + 1; j < archivos.size(); ++j) {
+            if (archivos[i] > archivos[j]) {
+                swap(archivos[i], archivos[j]);
+            }
+        }
+    }
 
+    for (const string& archivo : archivos) {
+        vector<vector<int>> matriz = leer_matriz(archivo);
+
+        string hora_inicio = obtener_hora_actual();
+        auto start_time = chrono::high_resolution_clock::now();
+
+        vector<int> secuencia = NEH_HEURISTIC(matriz);
+        int cmax = c_max(secuencia, matriz);
+
+        auto end_time = chrono::high_resolution_clock::now();
+        string hora_fin = obtener_hora_actual();
+        chrono::duration<double> duracion = end_time - start_time;
+
+        salida_csv << archivo << "," << hora_inicio << "," << hora_fin << ","
+                   << duracion.count() << "," << cmax << ",";
+        cout << archivo << "," << hora_inicio << "," << hora_fin << ","
+             << duracion.count() << "," << cmax << ",";
+        for (auto x : secuencia) {
+            salida_csv << x << " ";
+            cout << x << " ";
+        }
+        salida_csv << "\n";
+        cout << "\n";
+    }
+
+    salida_csv.close();
     return 0;
 }
-//exec: g++ -std=c++17 -o neh_heuristic neh_heuristic.cpp
-// exec: ./neh_heuristic

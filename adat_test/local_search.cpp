@@ -150,7 +150,7 @@ int main() {
         for (auto x : secuencia_generada) cout << x << " ";
         cout << "\nC_max generado: " << cmax_generado << endl;
         cout << "Hora inicio: " << hora_inicio << ", Hora fin: " << hora_fin
-             << ", Duración: " << duration.count() << " segundos\n";
+             << ", Duracion: " << duration.count() << " segundos\n";
 
         salida_csv << archivo << "," << hora_inicio << "," << hora_fin << ","
                    << duration.count() << "," << cmax_generado << ",";
