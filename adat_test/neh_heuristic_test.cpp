@@ -2,8 +2,10 @@
 #include <vector>
 #include <fstream>
 #include <algorithm>
-#include <cstdlib>
+#include <filesystem>
+#include <chrono>
 using namespace std;
+namespace fs = std::filesystem;
 
 vector<vector<int>> leer_matriz(const string& nombre_archivo) {
     ifstream archivo(nombre_archivo);
@@ -18,9 +20,7 @@ vector<vector<int>> leer_matriz(const string& nombre_archivo) {
     vector<vector<int>> p(num_trabajos, vector<int>(num_maquinas));
     for (int i = 0; i < num_trabajos; ++i) {
         for (int j = 0; j < num_maquinas; ++j) {
-            int tiempo;
-            archivo >> tiempo;
-            p[i][j] = tiempo;
+            archivo >> p[i][j];
         }
     }
 
@@ -82,17 +82,33 @@ vector<int> NEH_HEURISTIC(const vector<vector<int>>& p) {
 }
 
 int main() {
-    string archivo_entrada = "ta008";
-    vector<vector<int>> matriz = leer_matriz(archivo_entrada);
+    string directorio = ".";
+    ofstream salida_csv("resultados_NEH.csv");
+    salida_csv << "Archivo,C_max,Secuencia\n";
 
-    vector<int> secuencia = NEH_HEURISTIC(matriz);
+    for (const auto& entrada : fs::directory_iterator(directorio)) {
+        string archivo = entrada.path().filename().string();
+        if (archivo.find("ta") == 0) {
+            cout << "Procesando archivo: " << archivo << endl;
 
-    cout << "Final sequence: ";
-    for (auto x : secuencia) cout << x << " ";
-    cout << endl;
+            vector<vector<int>> matriz = leer_matriz(archivo);
+            vector<int> secuencia = NEH_HEURISTIC(matriz);
+            int cmax = c_max(secuencia, matriz);
+
+            salida_csv << archivo << "," << cmax << ",";
+            for (auto x : secuencia) salida_csv << x << " ";
+            salida_csv << "\n";
+
+            cout << "C_max: " << cmax << "\nSecuencia: ";
+            for (auto x : secuencia) cout << x << " ";
+            cout << "\n";
+        }
+    }
+
+    salida_csv.close();
+    cout << "Resultados guardados en 'resultados_NEH.csv'.\n";
 
     return 0;
 }
-
-// compile: g++ -std=c++17 -o bruteForce bruteForce.cpp
-// run: ./bruteForce
+//exec: g++ -std=c++17 -o neh_heuristic neh_heuristic.cpp
+// exec: ./neh_heuristic
