@@ -1,9 +1,33 @@
 #include <iostream>
 #include <vector>
+#include <fstream>
 #include <algorithm>
+#include <cstdlib>
 using namespace std;
 
-// Calcula el C_max para una secuencia dada y una matriz de tiempos p
+vector<vector<int>> leer_matriz(const string& nombre_archivo) {
+    ifstream archivo(nombre_archivo);
+    if (!archivo) {
+        cerr << "Error al abrir el archivo: " << nombre_archivo << endl;
+        exit(1);
+    }
+
+    int num_trabajos, num_maquinas;
+    archivo >> num_trabajos >> num_maquinas;
+
+    vector<vector<int>> p(num_trabajos, vector<int>(num_maquinas));
+    for (int i = 0; i < num_trabajos; ++i) {
+        for (int j = 0; j < num_maquinas; ++j) {
+            int tiempo;
+            archivo >> tiempo;
+            p[i][j] = tiempo;
+        }
+    }
+
+    archivo.close();
+    return p;
+}
+
 int c_max(const vector<int>& seq, const vector<vector<int>>& p) {
     int n = (int)seq.size();
     int m = (int)p[0].size();
@@ -16,21 +40,19 @@ int c_max(const vector<int>& seq, const vector<vector<int>>& p) {
     return f[n][m];
 }
 
-// Ordena las tareas en función de la suma total de sus tiempos de procesamiento
 vector<int> priority_order(const vector<vector<int>>& p) {
-    vector<pair<int, int>> s; // Vector de pares {suma, índice}
+    vector<pair<int, int>> s;
     for (int i = 0; i < (int)p.size(); i++) {
         int sum_ = 0;
         for (auto x : p[i]) sum_ += x;
-        s.push_back({sum_, i}); // Suma total de la tarea y su índice
+        s.push_back({sum_, i});
     }
-    sort(s.begin(), s.end(), [](auto &a, auto &b) { return a.first > b.first; }); // Orden descendente
+    sort(s.begin(), s.end(), [](auto &a, auto &b) { return a.first > b.first; });
     vector<int> o;
     for (auto &x : s) o.push_back(x.second);
     return o;
 }
 
-// Determina la mejor posición para insertar una tarea en una secuencia
 int best_insertion_position(const vector<int>& seq, int job, const vector<vector<int>>& p) {
     int best = -1;
     int val = -1;
@@ -46,44 +68,31 @@ int best_insertion_position(const vector<int>& seq, int job, const vector<vector
     return best;
 }
 
-// Algoritmo heurístico NEH
-vector<int> NEH_HEURISTIC() {
-    vector<vector<int>> p = {{3, 2}, {1, 4}, {2, 3}}; // Matriz de tiempos
-    vector<int> po = priority_order(p); // Obtener el orden de prioridad
-
-    cout << "Priority order: ";
-    for (auto x : po) cout << x << " ";
-    cout << "\n";
-
+vector<int> NEH_HEURISTIC(const vector<vector<int>>& p) {
+    vector<int> po = priority_order(p);
     vector<int> seq;
-    seq.push_back(po[0]); // Inicializa con la primera tarea
-    cout << "Initial sequence: " << po[0] << "\n\n";
+    seq.push_back(po[0]);
 
     for (int k = 1; k < (int)po.size(); k++) {
-        cout << "Adding task: " << po[k] << "\n";
-
-        // Encuentra la mejor posición para insertar la tarea
         int pos = best_insertion_position(seq, po[k], p);
-        cout << "Best position to insert: " << pos << "\n";
-
-        // Inserta la tarea en la mejor posición
         seq.insert(seq.begin() + pos, po[k]);
-        cout << "Updated sequence: ";
-        for (auto x : seq) cout << x << " ";
-        cout << "\n";
-
-        // Calcula y muestra el makespan actual
-        int current_cmax = c_max(seq, p);
-        cout << "Current C_max: " << current_cmax << "\n\n";
     }
 
     return seq;
 }
 
 int main() {
-    vector<int> s = NEH_HEURISTIC();
+    string archivo_entrada = "ta008";
+    vector<vector<int>> matriz = leer_matriz(archivo_entrada);
+
+    vector<int> secuencia = NEH_HEURISTIC(matriz);
+
     cout << "Final sequence: ";
-    for (auto x : s) cout << x << " ";
-    cout << "\n";
+    for (auto x : secuencia) cout << x << " ";
+    cout << endl;
+
     return 0;
 }
+
+// compile: g++ -std=c++17 -o bruteForce bruteForce.cpp
+// run: ./bruteForce
