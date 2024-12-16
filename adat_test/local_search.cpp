@@ -2,7 +2,6 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
-#include <algorithm>
 #include <filesystem>
 #include <chrono>
 #include <iomanip>
@@ -10,6 +9,22 @@
 using namespace std;
 namespace fs = std::filesystem;
 
+// Implementación personalizada de max
+int max(int a, int b) {
+    return (a > b) ? a : b;
+}
+
+// Implementación personalizada de rotate
+vector<int> rotate_vector(const vector<int>& vec) {
+    if (vec.empty()) return vec;
+
+    vector<int> rotated(vec.begin() + 1, vec.end());
+    rotated.push_back(vec[0]);
+
+    return rotated;
+}
+
+// Función c_max
 int c_max(const vector<int>& seq, const vector<vector<int>>& p) {
     int n = (int)seq.size();
     int m = (int)p[0].size();
@@ -22,6 +37,7 @@ int c_max(const vector<int>& seq, const vector<vector<int>>& p) {
     return f[n][m];
 }
 
+// Función para encontrar la mejor posición de inserción
 int best_insertion_position(const vector<int>& seq, int job, const vector<vector<int>>& p) {
     int best = -1;
     int val = -1;
@@ -37,12 +53,12 @@ int best_insertion_position(const vector<int>& seq, int job, const vector<vector
     return best;
 }
 
+// Función random_order usando la implementación personalizada de rotate
 vector<int> random_order(const vector<int>& seq) {
-    vector<int> s = seq;
-    rotate(s.begin(), s.begin() + 1, s.end());
-    return s;
+    return rotate_vector(seq);
 }
 
+// Función LOCAL_SEARCH
 vector<int> LOCAL_SEARCH(const vector<int>& pi, const vector<vector<int>>& p) {
     vector<int> pi_cur = pi;
     vector<int> pi_r = random_order(pi_cur);
@@ -69,6 +85,7 @@ vector<int> LOCAL_SEARCH(const vector<int>& pi, const vector<vector<int>>& p) {
     return pi_cur;
 }
 
+// Función para leer la matriz desde un archivo
 vector<vector<int>> leer_matriz_desde_archivo(const string& nombre_archivo) {
     ifstream archivo(nombre_archivo);
     if (!archivo) {
@@ -91,6 +108,7 @@ vector<vector<int>> leer_matriz_desde_archivo(const string& nombre_archivo) {
     return matriz;
 }
 
+// Ordenar archivos alfabéticamente
 void ordenar_archivos(vector<string>& archivos) {
     int n = archivos.size();
     for (int i = 0; i < n - 1; ++i) {
@@ -102,6 +120,7 @@ void ordenar_archivos(vector<string>& archivos) {
     }
 }
 
+// Obtener la hora actual como string
 string obtener_tiempo_actual() {
     auto now = chrono::system_clock::now();
     time_t tiempo_actual = chrono::system_clock::to_time_t(now);
@@ -110,6 +129,7 @@ string obtener_tiempo_actual() {
     return ss.str();
 }
 
+// Función principal
 int main() {
     string directorio = ".";
     vector<string> archivos_procesados;
@@ -163,5 +183,3 @@ int main() {
 
     return 0;
 }
-//exec: g++ -std=c++17 -o localSearch local_search.cpp
-// exec : ./localSearch
