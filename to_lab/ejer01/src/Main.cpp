@@ -48,3 +48,7 @@ int main() {
     std::cout << "\n[Pruebas finalizadas]\n";
     return 0;
 }
+
+// ejecucion dsede to_lab/ejer01 : g++ -o CuentaMain src/*.cpp -I ./src
+// ./CuentaMain
+
