@@ -1,40 +1,50 @@
-#include "CuentaCliente.h"
+#include "GlobalStore.h"
+#include "RepositorioSingleton.h"
+#include <iostream>
 
 int main() {
-    // Crear dos clientes que supuestamente usarán la misma instancia del Singleton
-    CuentaCliente cliente1("Juan Perez");
-    CuentaCliente cliente2("Maria Garcia");
+    GlobalStore store;
+    // Inicializamos el Singleton con la referencia al global store
+    RepositorioSingleton::inicializar(&store);
 
-    // Registrar cuentas a través del cliente1
-    cliente1.registrarCuentaCliente("Ahorro", 5000.0);
-    cliente1.registrarCuentaCliente("Credito", 10000.0);
+    // Creamos algunas cuentas (Ahorro, Credito, Empresarial mancomunada)
+    store.crearCuenta({"Juan Perez"}, "Ahorro", 5000.0);
+    store.crearCuenta({"Maria Garcia"}, "Credito", 2000.0);
+    store.crearCuenta({"Juan Perez", "Carlos Lopez"}, "Empresarial", 10000.0);
 
-    // Mostrar cuentas desde cliente1
-    std::cout << "\n--- Cuentas vistas por cliente1 ---\n";
-    cliente1.mostrarCuentasCliente();
+    store.listarTodasLasCuentas();
 
-    // Mostrar cuentas desde cliente2 (deberían ser las mismas, pues es el mismo Singleton)
-    std::cout << "\n--- Cuentas vistas por cliente2 (deberían coincidir con las de cliente1) ---\n";
-    cliente2.mostrarCuentasCliente();
+    // Obtenemos repositorios por cliente
+    RepositorioCuentasUsuario* repoJuan = RepositorioSingleton::obtenerInstancia()->getRepositorioParaCliente("Juan Perez");
+    RepositorioCuentasUsuario* repoMaria = RepositorioSingleton::obtenerInstancia()->getRepositorioParaCliente("Maria Garcia");
+    RepositorioCuentasUsuario* repoCarlos = RepositorioSingleton::obtenerInstancia()->getRepositorioParaCliente("Carlos Lopez");
 
-    // Calcular intereses
-    std::cout << "\n--- Cálculo de Intereses ---\n";
-    cliente1.calcularInteresCliente("Ahorro", 5000.0);
-    cliente2.calcularInteresCliente("Credito", 10000.0);
+    // Mostrar estados globales
+    repoJuan->estadoCuentaGlobal("2024-12-31");
+    repoMaria->estadoCuentaGlobal("2024-12-31");
+    repoCarlos->estadoCuentaGlobal("2024-12-31");
 
-    // Prueba con un tipo de cuenta desconocido
-    std::cout << "\n--- Prueba con tipo de cuenta desconocido ---\n";
-    cliente1.calcularInteresCliente("Desconocido", 2000.0);
+    // Prestamo personal a cuenta Empresarial de Juan (y Carlos)
+    repoJuan->aplicarPrestamoPersonal("Empresarial", 5000.0, 0.9);
 
-    // "Pruebas" simples:
-    // Verificar manualmente la salida, o implementar condiciones lógicas aquí
-    // Por ejemplo:
-    double interesAhorro = CuentaManager::getInstance()->calcularInteres("Ahorro", 1000.0);
-    if (interesAhorro == 50.0) {
-        std::cout << "\n[TEST PASSED] Interés en cuenta Ahorro para 1000.0 es 50.0\n";
-    } else {
-        std::cout << "\n[TEST FAILED] Interés en cuenta Ahorro debería ser 50.0, obtenido: " << interesAhorro << "\n";
-    }
+    // Transferir de Ahorro de Juan a Credito de Maria
+    repoJuan->transferirHacia(repoMaria, "Ahorro", "Credito", 1000.0);
 
+    // Compra con tarjeta de credito de Maria
+    repoMaria->compraTarjetaCredito("Credito", 500.0);
+
+    // Pagar deuda en cuenta Credito de Maria
+    repoMaria->pagarDeuda("Credito", 300.0);
+    repoMaria->pagarDeuda("Credito", 100.0);
+
+    // Aplicar interes base a cuenta Ahorro de Juan
+    repoJuan->aplicarInteresBase("Ahorro");
+
+    // Mostrar estados de nuevo
+    repoJuan->estadoCuentaGlobal("2025-01-10");
+    repoMaria->estadoCuentaGlobal("2025-01-10");
+    repoCarlos->estadoCuentaGlobal("2025-01-10");
+
+    std::cout << "\n[Pruebas finalizadas]\n";
     return 0;
 }
